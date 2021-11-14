@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using YaClipper.MouseListener;
 
 namespace YaClipper
 {
@@ -31,7 +32,8 @@ namespace YaClipper
         private int currentZoomRatioIndex = 3; // 1.0
         private double currentZoomRatio = 1.0;
         private Bitmap currentImage;
-        private Bitmap currentDispImage;
+
+        private IMouseListener currentMouseListener;
 
         public MainForm()
         {
@@ -50,6 +52,8 @@ namespace YaClipper
             this.MouseEnter += new EventHandler(this.MainForm_MouseEnter);
             this.MouseWheel += new MouseEventHandler(this.MainForm_MouseWheel);
             KeyDown += new KeyEventHandler(MainForm_KeyDown);
+
+            this.currentMouseListener = new EditMouseListener();
         }
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
@@ -58,7 +62,9 @@ namespace YaClipper
             {
                 Image image = Clipboard.GetImage();
                 this.currentImage = new Bitmap(image);
-                setImageToPicutreBox();
+                this.mainPictureBox.Size = this.currentImage.Size;
+                //this.mainPictureBox.Image = this.currentImage;
+                this.mainPictureBox.Invalidate();
             }
         }
 
@@ -98,20 +104,58 @@ namespace YaClipper
                     this.currentZoomRatioIndex = this.currentZoomRatioIndex + delta;
                 }
                 this.currentZoomRatio = this.zoomRatioArray[this.currentZoomRatioIndex];
-                setImageToPicutreBox();
+                this.mainPictureBox.Size = new Size((int)(this.currentImage.Width * this.currentZoomRatio),
+                                                    (int)(this.currentImage.Height * this.currentZoomRatio));
+                this.mainPictureBox.Invalidate();
             }
         }
 
-        private void setImageToPicutreBox()
+        private void mainPictureBox_Paint(object sender, PaintEventArgs e)
         {
+            Console.WriteLine("mainPictureBox_Paint called.");
+            ScrollableControl scrollable = (ScrollableControl)this.mainPanel;
+            Console.WriteLine("Horizontal Value.." + scrollable.HorizontalScroll.Value);
+            Console.WriteLine("Vertical Value.." + scrollable.VerticalScroll.Value);
+            Console.WriteLine("scrollable area.." + scrollable.Left + ", " + scrollable.Top + "-" + scrollable.Right + ", " + scrollable.Bottom);
             if (this.currentImage == null)
             {
+                Console.WriteLine("currentImage == null");
                 return;
             }
-            this.currentDispImage = new Bitmap(this.currentImage,
-                                            (int)(this.currentImage.Width * this.currentZoomRatio),
-                                            (int)(this.currentImage.Height * this.currentZoomRatio));
-            this.mainPictureBox.Image = this.currentDispImage;
+
+            Rectangle destRect = new Rectangle(scrollable.HorizontalScroll.Value,
+                                               scrollable.VerticalScroll.Value,
+                                               this.mainPanel.Width, this.mainPanel.Height);
+            Console.WriteLine("destRect.." + destRect);
+            int srcX = (int)(scrollable.HorizontalScroll.Value / this.currentZoomRatio);
+            int srcY = (int)(scrollable.VerticalScroll.Value / this.currentZoomRatio);
+            int srcWidth = (int)(this.mainPanel.Width / this.currentZoomRatio);
+            int srcHeight = (int)(this.mainPanel.Height / this.currentZoomRatio);
+
+            Graphics g = e.Graphics;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            g.DrawImage(this.currentImage, destRect, srcX, srcY, srcWidth, srcHeight, GraphicsUnit.Pixel);
+
+
+            //g.DrawLine(pen, scrollable.HorizontalScroll.Value, scrollable.VerticalScroll.Value,
+            //    scrollable.HorizontalScroll.Value + this.mainPanel.Width,
+            //    scrollable.VerticalScroll.Value + this.mainPanel.Height);
         }
+
+        private void mainPictureBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            this.currentMouseListener.OnMouseDown(e);
+        }
+
+        private void mainPictureBox_MouseUp(object sender, MouseEventArgs e)
+        {
+            this.currentMouseListener.OnMouseUp(e);
+        }
+
+        private void mainPictureBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            this.currentMouseListener.OnMouseMove(e);
+        }
+
     }
 }
