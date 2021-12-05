@@ -52,6 +52,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Gdi\BrushStyle.cs" />
+    <Compile Include="Gdi\PenStyle.cs" />
+    <Compile Include="Gdi\RasterOperationCode.cs" />
+    <Compile Include="Gdi\Gdi32.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

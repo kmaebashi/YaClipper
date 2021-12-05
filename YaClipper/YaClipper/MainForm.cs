@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using YaClipper.MouseListener;
+using YaClipper.Gdi;
 
 namespace YaClipper
 {
@@ -32,6 +33,7 @@ namespace YaClipper
         private int currentZoomRatioIndex = 3; // 1.0
         private double currentZoomRatio = 1.0;
         private Bitmap currentImage;
+        private Gdi32 gdi32;
 
         private IMouseListener currentMouseListener;
 
@@ -52,8 +54,9 @@ namespace YaClipper
             this.MouseEnter += new EventHandler(this.MainForm_MouseEnter);
             this.MouseWheel += new MouseEventHandler(this.MainForm_MouseWheel);
             KeyDown += new KeyEventHandler(MainForm_KeyDown);
+            this.gdi32 = new Gdi32(this.mainPictureBox.CreateGraphics());
 
-            this.currentMouseListener = new EditMouseListener();
+            this.currentMouseListener = new EditMouseListener(this.mainPictureBox, gdi32);
         }
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
